@@ -7,18 +7,20 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
 import com.gorosheg.facedetector.presentation.FaceDetectorActivity.Companion.REQUEST_CODE_PERMISSIONS
-import kotlin.reflect.KFunction1
 
-fun enableCamera(activity: Activity, startCamera: () -> Unit) {
-    if (ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-        startCamera.invoke()
+fun enableCamera(activity: Activity): Boolean {
+    return if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
+        == PackageManager.PERMISSION_GRANTED
+    ) {
+        true
     } else {
         requestPermissions(activity)
+        false
     }
 }
 
 private fun requestPermissions(activity: Activity) {
-    ActivityCompat.requestPermissions(
+    requestPermissions(
         activity,
         arrayOf(Manifest.permission.CAMERA),
         REQUEST_CODE_PERMISSIONS

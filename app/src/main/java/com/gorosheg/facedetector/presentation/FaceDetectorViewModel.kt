@@ -1,7 +1,14 @@
 package com.gorosheg.facedetector.presentation
 
+import androidx.camera.view.PreviewView
 import androidx.lifecycle.ViewModel
-import com.gorosheg.facedetector.domain.FaceDetectorInteractor
 
-class FaceDetectorViewModel(private val interactor: FaceDetectorInteractor) : ViewModel() {
+class FaceDetectorViewModel(private val cameraPreview: CameraPreview) : ViewModel() {
+
+    fun startCamera(activity: FaceDetectorActivity, previewView: PreviewView) {
+        cameraPreview.startCamera(activity, previewView)
+    }
+
+    fun takePhoto() {}
+
 }
