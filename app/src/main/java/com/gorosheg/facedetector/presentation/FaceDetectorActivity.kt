@@ -6,32 +6,42 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
+import androidx.lifecycle.Observer
 import com.gorosheg.facedetector.R
+import com.gorosheg.facedetector.presentation.camera.cameraPermissionGranted
+import com.gorosheg.facedetector.presentation.camera.requestPermissions
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 
 class FaceDetectorActivity : AppCompatActivity() {
     private val previewView by lazy { findViewById<PreviewView>(R.id.previewView) }
 
-    private val viewModel: FaceDetectorViewModel by viewModel {
-        parametersOf(this)
-    }
+    private val viewModel: FaceDetectorViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if (enableCamera(this)) {
+        if (cameraPermissionGranted(this)) {
             viewModel.startCamera(this, previewView)
+        } else {
+            requestPermissions(this)
         }
 
         val takePhotoButton: Button = findViewById(R.id.take_photo_button)
+        val switchCameraButton: Button = findViewById(R.id.switchCameraButton)
+        switchCameraButton.setOnClickListener { viewModel.switchCamera() }
         takePhotoButton.setOnClickListener { viewModel.takePhoto() }
+
+        viewModel.viewState.observe(this, Observer(this::onStateChanged))
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String?>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String?>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_CODE_PERMISSIONS) {
+        if (requestCode == 0) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 viewModel.startCamera(this, previewView)
             } else {
@@ -40,7 +50,7 @@ class FaceDetectorActivity : AppCompatActivity() {
         }
     }
 
-    companion object {
-        const val REQUEST_CODE_PERMISSIONS = 0
+    private fun onStateChanged(viewState: FaceDetectorViewState) {
+        viewModel.startCamera(this, previewView)
     }
 }
