@@ -20,7 +20,17 @@ class FaceDetectorViewModel(private val cameraPreview: CameraPreview) : BaseView
         cameraPreview.startCamera(
             activity,
             previewView,
-            viewState.requireValue().cameraSelector
+            viewState.requireValue().cameraSelector,
+            setSourceInfo = {
+                viewState.update {
+                    copy(sourceInfo = it)
+                }
+            },
+            onFacesDetected = {
+                viewState.update {
+                    copy(detectedFaces = it)
+                }
+            }
         )
     }
 

@@ -2,10 +2,15 @@ package com.gorosheg.facedetector.presentation.camera
 
 import android.util.Log
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import com.google.android.gms.tasks.TaskExecutors
+import com.google.mlkit.common.MlKitException
+import com.google.mlkit.vision.face.Face
 import com.gorosheg.facedetector.presentation.FaceDetectorActivity
 
 class CameraPreview {
@@ -13,6 +18,8 @@ class CameraPreview {
         activity: FaceDetectorActivity,
         previewView: PreviewView,
         cameraLens: Int,
+        setSourceInfo: (SourceInfo) -> Unit,
+        onFacesDetected: (List<Face>) -> Unit
     ) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(activity)
 
@@ -23,22 +30,74 @@ class CameraPreview {
                     setSurfaceProvider(previewView.surfaceProvider)
                 }
 
-            val cameraSelector: CameraSelector = when (cameraLens) {
-                0 -> CameraSelector.DEFAULT_FRONT_CAMERA
-                else -> CameraSelector.DEFAULT_BACK_CAMERA
-            }
-
+            val cameraSelector: CameraSelector = CameraSelector.Builder().requireLensFacing(cameraLens).build()
+            val analysis = bindAnalysisUseCase(cameraLens, setSourceInfo, onFacesDetected)
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
             try {
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(activity, cameraSelector, preview /*imageCapture*/)
+                cameraProvider.bindToLifecycle(activity, cameraSelector, preview, analysis)
 
             } catch (exc: Exception) {
                 Log.e(TAG, "camera binding failed", exc)
             }
         }, ContextCompat.getMainExecutor(activity))
     }
+
+    private fun bindAnalysisUseCase(
+        lens: Int,
+        setSourceInfo: (SourceInfo) -> Unit,
+        onFacesDetected: (List<Face>) -> Unit
+    ): ImageAnalysis? {
+
+        val imageProcessor = try {
+            FaceDetector()
+        } catch (e: Exception) {
+            Log.e("CAMERA", "Can not create Face detector", e)
+            return null
+        }
+        val builder = ImageAnalysis.Builder()
+        val analysisUseCase = builder.build()
+
+        var sourceInfoUpdated = false
+
+        analysisUseCase.setAnalyzer(
+            TaskExecutors.MAIN_THREAD
+        ) { imageProxy: ImageProxy ->
+            if (!sourceInfoUpdated) {
+                setSourceInfo(obtainSourceInfo(lens, imageProxy)) // получаем размеры картинки
+                sourceInfoUpdated = true
+            }
+            try {
+                imageProcessor.processImageProxy(imageProxy, onFacesDetected) // когда лицо определиться, вызвать колбэк
+            } catch (e: MlKitException) {
+                Log.e(
+                    "CAMERA", "Failed to process image. Error: " + e.localizedMessage
+                )
+            }
+        }
+        return analysisUseCase
+    }
+
+    private fun obtainSourceInfo(lens: Int, imageProxy: ImageProxy): SourceInfo {
+        val isImageFlipped = lens == CameraSelector.LENS_FACING_FRONT
+        val rotationDegrees = imageProxy.imageInfo.rotationDegrees
+        return if (rotationDegrees == 0 || rotationDegrees == 180) {
+            SourceInfo(
+                height = imageProxy.height, width = imageProxy.width, isImageFlipped = isImageFlipped
+            )
+        } else {
+            SourceInfo(
+                height = imageProxy.width, width = imageProxy.height, isImageFlipped = isImageFlipped
+            )
+        }
+    }
+
+    data class SourceInfo(
+        val width: Int,
+        val height: Int,
+        val isImageFlipped: Boolean,
+    )
 
     companion object {
         private const val TAG = "BindingCamera"

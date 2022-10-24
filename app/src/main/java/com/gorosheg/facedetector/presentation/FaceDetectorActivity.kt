@@ -5,16 +5,18 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.CameraSelector
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.Observer
 import com.gorosheg.facedetector.R
+import com.gorosheg.facedetector.presentation.camera.FaceDraw
 import com.gorosheg.facedetector.presentation.camera.cameraPermissionGranted
 import com.gorosheg.facedetector.presentation.camera.requestPermissions
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class FaceDetectorActivity : AppCompatActivity() {
     private val previewView by lazy { findViewById<PreviewView>(R.id.previewView) }
-
+    private var changeCamera = CameraSelector.LENS_FACING_BACK
     private val viewModel: FaceDetectorViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,12 +29,12 @@ class FaceDetectorActivity : AppCompatActivity() {
             requestPermissions(this)
         }
 
+        viewModel.viewState.observe(this, Observer(this::onStateChanged))
+
         val takePhotoButton: Button = findViewById(R.id.take_photo_button)
         val switchCameraButton: Button = findViewById(R.id.switchCameraButton)
         switchCameraButton.setOnClickListener { viewModel.switchCamera() }
         takePhotoButton.setOnClickListener { viewModel.takePhoto() }
-
-        viewModel.viewState.observe(this, Observer(this::onStateChanged))
     }
 
     override fun onRequestPermissionsResult(
@@ -51,6 +53,11 @@ class FaceDetectorActivity : AppCompatActivity() {
     }
 
     private fun onStateChanged(viewState: FaceDetectorViewState) {
-        viewModel.startCamera(this, previewView)
+        if (changeCamera != viewState.cameraSelector) {
+            viewModel.startCamera(this, previewView)
+            changeCamera = viewState.cameraSelector
+        }
+        val faceRect = FaceDraw(this, viewState.detectedFaces, viewState.sourceInfo, previewView)
+        previewView.addView(faceRect)
     }
 }
