@@ -11,6 +11,8 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.tasks.TaskExecutors
 import com.google.mlkit.common.MlKitException
 import com.google.mlkit.vision.face.Face
+import com.google.mlkit.vision.pose.Pose
+import com.google.mlkit.vision.pose.PoseDetector
 import com.gorosheg.facedetector.presentation.FaceDetectorActivity
 
 class CameraPreview {
@@ -19,7 +21,8 @@ class CameraPreview {
         previewView: PreviewView,
         cameraLens: Int,
         setSourceInfo: (SourceInfo) -> Unit,
-        onFacesDetected: (List<Face>) -> Unit
+        onFacesDetected: (List<Face>) -> Unit,
+        onPoseDetected: (Pose) -> Unit
     ) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(activity)
 
@@ -31,7 +34,7 @@ class CameraPreview {
                 }
 
             val cameraSelector: CameraSelector = CameraSelector.Builder().requireLensFacing(cameraLens).build()
-            val analysis = bindAnalysisUseCase(cameraLens, setSourceInfo, onFacesDetected)
+            val analysis = bindAnalysisUseCase(cameraLens, setSourceInfo, onFacesDetected, onPoseDetected)
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
             try {
@@ -47,15 +50,24 @@ class CameraPreview {
     private fun bindAnalysisUseCase(
         lens: Int,
         setSourceInfo: (SourceInfo) -> Unit,
-        onFacesDetected: (List<Face>) -> Unit
+        onFacesDetected: (List<Face>) -> Unit,
+        onPoseDetected: (Pose) -> Unit
     ): ImageAnalysis? {
 
-        val imageProcessor = try {
+        val faceProcessor = try {
             FaceDetector()
         } catch (e: Exception) {
             Log.e("CAMERA", "Can not create Face detector", e)
             return null
         }
+
+        val poseProcessor = try {
+            PoseDetector()
+        } catch (e: Exception) {
+            Log.e("CAMERA", "Can not create Pose detector", e)
+            return null
+        }
+
         val builder = ImageAnalysis.Builder()
         val analysisUseCase = builder.build()
 
@@ -69,7 +81,8 @@ class CameraPreview {
                 sourceInfoUpdated = true
             }
             try {
-                imageProcessor.processImageProxy(imageProxy, onFacesDetected) // когда лицо определиться, вызвать колбэк
+                faceProcessor.processImageProxy(imageProxy, onFacesDetected) // когда лицо определиться, вызвать колбэк
+                poseProcessor.processImageProxy(imageProxy, onPoseDetected)
             } catch (e: MlKitException) {
                 Log.e(
                     "CAMERA", "Failed to process image. Error: " + e.localizedMessage

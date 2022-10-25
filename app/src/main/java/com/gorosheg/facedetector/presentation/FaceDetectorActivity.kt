@@ -10,6 +10,7 @@ import androidx.camera.view.PreviewView
 import androidx.lifecycle.Observer
 import com.gorosheg.facedetector.R
 import com.gorosheg.facedetector.presentation.camera.FaceDraw
+import com.gorosheg.facedetector.presentation.camera.PoseDraw
 import com.gorosheg.facedetector.presentation.camera.cameraPermissionGranted
 import com.gorosheg.facedetector.presentation.camera.requestPermissions
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -57,7 +58,10 @@ class FaceDetectorActivity : AppCompatActivity() {
             viewModel.startCamera(this, previewView)
             changeCamera = viewState.cameraSelector
         }
-        val faceRect = FaceDraw(this, viewState.detectedFaces, viewState.sourceInfo, previewView)
-        previewView.addView(faceRect)
+        /* val faceRect = FaceDraw(this, viewState.detectedFaces, viewState.sourceInfo, previewView)
+         previewView.addView(faceRect)*/
+
+        val poseShape = PoseDraw(this, viewState.detectedPose, viewState.sourceInfo, previewView)
+        previewView.addView(poseShape)
     }
 }

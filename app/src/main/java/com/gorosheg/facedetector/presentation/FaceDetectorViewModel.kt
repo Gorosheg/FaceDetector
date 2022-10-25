@@ -30,6 +30,11 @@ class FaceDetectorViewModel(private val cameraPreview: CameraPreview) : BaseView
                 viewState.update {
                     copy(detectedFaces = it)
                 }
+            },
+            onPoseDetected = {
+                viewState.update {
+                    copy(detectedPose = it)
+                }
             }
         )
     }
