@@ -1,4 +1,4 @@
-package com.gorosheg.facedetector.presentation.camera
+package com.gorosheg.facedetector.presentation.camera.Pose
 
 import android.annotation.SuppressLint
 import android.util.Log

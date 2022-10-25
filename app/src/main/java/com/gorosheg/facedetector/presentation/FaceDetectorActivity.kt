@@ -5,19 +5,16 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraSelector
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.Observer
 import com.gorosheg.facedetector.R
-import com.gorosheg.facedetector.presentation.camera.FaceDraw
-import com.gorosheg.facedetector.presentation.camera.PoseDraw
+import com.gorosheg.facedetector.presentation.camera.Face.FaceDraw
 import com.gorosheg.facedetector.presentation.camera.cameraPermissionGranted
 import com.gorosheg.facedetector.presentation.camera.requestPermissions
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class FaceDetectorActivity : AppCompatActivity() {
     private val previewView by lazy { findViewById<PreviewView>(R.id.previewView) }
-    private var changeCamera = CameraSelector.LENS_FACING_BACK
     private val viewModel: FaceDetectorViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,14 +51,13 @@ class FaceDetectorActivity : AppCompatActivity() {
     }
 
     private fun onStateChanged(viewState: FaceDetectorViewState) {
-        if (changeCamera != viewState.cameraSelector) {
+        if (viewState.cameraLens.isChanging) {
             viewModel.startCamera(this, previewView)
-            changeCamera = viewState.cameraSelector
         }
-        /* val faceRect = FaceDraw(this, viewState.detectedFaces, viewState.sourceInfo, previewView)
-         previewView.addView(faceRect)*/
+        val faceRect = FaceDraw(this, viewState.detectedFaces, viewState.imageSourceInfo, previewView)
+        previewView.addView(faceRect)
 
-        val poseShape = PoseDraw(this, viewState.detectedPose, viewState.sourceInfo, previewView)
-        previewView.addView(poseShape)
+        /*val poseShape = PoseDraw(this, viewState.detectedPose, viewState.sourceInfo, previewView)
+        previewView.addView(poseShape)*/
     }
 }

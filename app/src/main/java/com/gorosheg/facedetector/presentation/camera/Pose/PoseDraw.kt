@@ -1,4 +1,4 @@
-package com.gorosheg.facedetector.presentation.camera
+package com.gorosheg.facedetector.presentation.camera.Pose
 
 import android.content.Context
 import android.graphics.Canvas
@@ -9,25 +9,23 @@ import android.view.View
 import androidx.camera.view.PreviewView
 import com.google.mlkit.vision.pose.Pose
 import com.google.mlkit.vision.pose.PoseLandmark
+import com.gorosheg.facedetector.model.ImageSourceInfo
 
 class PoseDraw(
     context: Context,
     private val pose: Pose?,
-    private val sourceInfo: CameraPreview.SourceInfo,
+    private val imageSourceInfo: ImageSourceInfo,
     previewView: PreviewView
 ) : View(context) {
 
-    private val needToMirror = sourceInfo.isImageFlipped
+    private val needToMirror = imageSourceInfo.isImageFlipped
 
     private val linePaint: Paint = Paint().apply {
         style = Paint.Style.STROKE
         strokeWidth = 8F
     }
 
-    /* private val scaleHeight = (previewView.height / sourceInfo.height).toFloat()
-     private val scaleWidth = (previewView.width / sourceInfo.width).toFloat()*/
-
-    private val scale = (previewView.height * previewView.width) / (sourceInfo.width * sourceInfo.height) / 2
+    private val scale = (previewView.height * previewView.width) / (imageSourceInfo.width * imageSourceInfo.height) / 2
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -98,12 +96,12 @@ class PoseDraw(
     ) {
         if (startPoint != null && endPoint != null) {
             val startX =
-                if (needToMirror) sourceInfo.width - startPoint.position.x
+                if (needToMirror) imageSourceInfo.width - startPoint.position.x
                 else startPoint.position.x
             val startY = startPoint.position.y
 
             val endX =
-                if (needToMirror) sourceInfo.width - endPoint.position.x
+                if (needToMirror) imageSourceInfo.width - endPoint.position.x
                 else endPoint.position.x
             val endY = endPoint.position.y
 

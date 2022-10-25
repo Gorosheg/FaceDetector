@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">FaceDetector</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="btn_switch">switch</string>
 </resources>

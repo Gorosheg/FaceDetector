@@ -1,4 +1,4 @@
-package com.gorosheg.facedetector.presentation.camera
+package com.gorosheg.facedetector.presentation.camera.Face
 
 import android.content.Context
 import android.graphics.Canvas
@@ -8,15 +8,16 @@ import android.graphics.PorterDuff
 import android.view.View
 import androidx.camera.view.PreviewView
 import com.google.mlkit.vision.face.Face
+import com.gorosheg.facedetector.model.ImageSourceInfo
 
 class FaceDraw(
     context: Context,
     private val faces: List<Face>,
-    private val sourceInfo: CameraPreview.SourceInfo,
+    private val imageSourceInfo: ImageSourceInfo,
     previewView: PreviewView
 ) : View(context) {
 
-    private val needToMirror = sourceInfo.isImageFlipped
+    private val needToMirror = imageSourceInfo.isImageFlipped
 
     private val rectPaint: Paint = Paint().apply {
         style = Paint.Style.STROKE
@@ -24,8 +25,8 @@ class FaceDraw(
         strokeWidth = 8F
     }
 
-    private val scaleHeight = (previewView.height / sourceInfo.height).toFloat()
-    private val scaleWidth = (previewView.width / sourceInfo.width).toFloat()
+    private val scaleHeight = (previewView.height / imageSourceInfo.height).toFloat()
+    private val scaleWidth = (previewView.width / imageSourceInfo.width).toFloat()
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -33,11 +34,11 @@ class FaceDraw(
 
         for (face in faces) {
             val left =
-                if (needToMirror) sourceInfo.width - face.boundingBox.right.toFloat()
+                if (needToMirror) imageSourceInfo.width - face.boundingBox.right.toFloat()
                 else face.boundingBox.left.toFloat()
 
             val right =
-                if (needToMirror) sourceInfo.width - face.boundingBox.left.toFloat()
+                if (needToMirror) imageSourceInfo.width - face.boundingBox.left.toFloat()
                 else face.boundingBox.right.toFloat()
 
             canvas.drawRect(

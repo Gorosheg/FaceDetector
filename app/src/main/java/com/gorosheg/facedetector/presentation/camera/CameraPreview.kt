@@ -12,15 +12,16 @@ import com.google.android.gms.tasks.TaskExecutors
 import com.google.mlkit.common.MlKitException
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.pose.Pose
-import com.google.mlkit.vision.pose.PoseDetector
+import com.gorosheg.facedetector.model.ImageSourceInfo
 import com.gorosheg.facedetector.presentation.FaceDetectorActivity
+import com.gorosheg.facedetector.presentation.camera.Face.FaceDetector
 
 class CameraPreview {
     fun startCamera(
         activity: FaceDetectorActivity,
         previewView: PreviewView,
         cameraLens: Int,
-        setSourceInfo: (SourceInfo) -> Unit,
+        setSourceInfo: (ImageSourceInfo) -> Unit,
         onFacesDetected: (List<Face>) -> Unit,
         onPoseDetected: (Pose) -> Unit
     ) {
@@ -34,22 +35,22 @@ class CameraPreview {
                 }
 
             val cameraSelector: CameraSelector = CameraSelector.Builder().requireLensFacing(cameraLens).build()
-            val analysis = bindAnalysisUseCase(cameraLens, setSourceInfo, onFacesDetected, onPoseDetected)
+            val analysis = buildImageAnalysis(cameraLens, setSourceInfo, onFacesDetected, onPoseDetected)
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
             try {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(activity, cameraSelector, preview, analysis)
 
-            } catch (exc: Exception) {
-                Log.e(TAG, "camera binding failed", exc)
+            } catch (e: Exception) {
+                Log.e(TAG, "camera binding failed", e)
             }
         }, ContextCompat.getMainExecutor(activity))
     }
 
-    private fun bindAnalysisUseCase(
+    private fun buildImageAnalysis(
         lens: Int,
-        setSourceInfo: (SourceInfo) -> Unit,
+        setSourceInfo: (ImageSourceInfo) -> Unit,
         onFacesDetected: (List<Face>) -> Unit,
         onPoseDetected: (Pose) -> Unit
     ): ImageAnalysis? {
@@ -62,22 +63,20 @@ class CameraPreview {
         }
 
         val poseProcessor = try {
-            PoseDetector()
+            com.gorosheg.facedetector.presentation.camera.Pose.PoseDetector()
         } catch (e: Exception) {
             Log.e("CAMERA", "Can not create Pose detector", e)
             return null
         }
 
-        val builder = ImageAnalysis.Builder()
-        val analysisUseCase = builder.build()
-
         var sourceInfoUpdated = false
+        val imageAnalysis = ImageAnalysis.Builder().build()
 
-        analysisUseCase.setAnalyzer(
+        imageAnalysis.setAnalyzer(
             TaskExecutors.MAIN_THREAD
         ) { imageProxy: ImageProxy ->
             if (!sourceInfoUpdated) {
-                setSourceInfo(obtainSourceInfo(lens, imageProxy)) // получаем размеры картинки
+                setSourceInfo(getSourceInfo(lens, imageProxy)) // получаем размеры картинки
                 sourceInfoUpdated = true
             }
             try {
@@ -89,28 +88,22 @@ class CameraPreview {
                 )
             }
         }
-        return analysisUseCase
+        return imageAnalysis
     }
 
-    private fun obtainSourceInfo(lens: Int, imageProxy: ImageProxy): SourceInfo {
+    private fun getSourceInfo(lens: Int, imageProxy: ImageProxy): ImageSourceInfo {
         val isImageFlipped = lens == CameraSelector.LENS_FACING_FRONT
         val rotationDegrees = imageProxy.imageInfo.rotationDegrees
         return if (rotationDegrees == 0 || rotationDegrees == 180) {
-            SourceInfo(
+            ImageSourceInfo(
                 height = imageProxy.height, width = imageProxy.width, isImageFlipped = isImageFlipped
             )
         } else {
-            SourceInfo(
+            ImageSourceInfo(
                 height = imageProxy.width, width = imageProxy.height, isImageFlipped = isImageFlipped
             )
         }
     }
-
-    data class SourceInfo(
-        val width: Int,
-        val height: Int,
-        val isImageFlipped: Boolean,
-    )
 
     companion object {
         private const val TAG = "BindingCamera"

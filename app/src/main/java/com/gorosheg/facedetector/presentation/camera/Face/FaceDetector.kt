@@ -1,4 +1,4 @@
-package com.gorosheg.facedetector.presentation.camera
+package com.gorosheg.facedetector.presentation.camera.Face
 
 import android.annotation.SuppressLint
 import android.util.Log
@@ -12,7 +12,6 @@ import com.google.mlkit.vision.face.FaceDetectorOptions
 
 class FaceDetector {
     private val detector: FaceDetector
-
     private val executor = TaskExecutors.MAIN_THREAD
 
     init {
