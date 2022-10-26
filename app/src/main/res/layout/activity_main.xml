@@ -11,7 +11,7 @@
         android:layout_height="match_parent" />
 
     <Button
-        android:id="@+id/take_photo_button"
+        android:id="@+id/takePhotoButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="50dp"
@@ -29,6 +29,6 @@
         android:text="@string/btn_switch"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/take_photo_button" />
+        app:layout_constraintStart_toEndOf="@+id/takePhotoButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

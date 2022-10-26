@@ -1,6 +1,6 @@
 package com.gorosheg.facedetector.model
 
-class CameraLens(
+data class Camera(
     val lens: Int,
     val isChanging: Boolean
 )
